@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marquee Content</title>
+</head>
+<body>
+  <div>
+    <marquee direction="left" behavior="scroll" scrollamount="4" style="font-size: 16px; color: red; font-weight: bold;" id="marqueeContent"></marquee>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script>
+    $(document).ready(function () {
+      console.log("Document ready");
+
+      // Function to update marquee with the latest item title
+      function updateMarquee() {
+        console.log("Updating marquee...");
+
+        // Add your SharePoint site URL here
+        var siteUrl = 'https://your-sharepoint-site-url';
+
+        // Ensure that SP is available
+        if (typeof SP !== 'undefined' && SP.ClientContext) {
+          var context = new SP.ClientContext(siteUrl);
+          var list = context.get_web().get_lists().getByTitle('CSO updates');
+          var camlQuery = new SP.CamlQuery();
+          camlQuery.set_viewXml('<View><Query><OrderBy><FieldRef Name="Created" Ascending="False"/></OrderBy></Query><RowLimit>1</RowLimit></View>');
+          var items = list.getItems(camlQuery);
+
+          context.load(items);
+          context.executeQueryAsync(
+            function () {
+              if (items.get_count() > 0) {
+                var latestTitle = items.getItemAtIndex(0).get_item('Title');
+                $("#marqueeContent").text(latestTitle);
+              }
+            },
+            function (sender, args) {
+              console.log('Request failed. ' + args.get_message());
+            }
+          );
+        }
+      }
+
+      // Initial update
+      updateMarquee();
+
+      // Update marquee every X seconds (adjust the interval as needed)
+      setInterval(function () {
+        updateMarquee();
+      }, 5000); // 5000 milliseconds (5 seconds) interval
+    });
+  </script>
+</body>
+</html>
